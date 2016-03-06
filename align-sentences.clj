@@ -1,5 +1,7 @@
 (require ['clojure.string :as 'str])
 (require ['clojure.main :as 'main])
+(require ['clojure.data.json :as 'json])
+
 (import java.io.BufferedWriter)
 (import java.io.FileWriter)
 
@@ -37,14 +39,21 @@
                              lst)))))))
 
 (defn align-all []
-  (mapcat (fn [path] (align-from-paths (str "eng/txt/" path)
-                                       (str "tha/txt/" path)))
-          (common-paths "eng/txt" "tha/txt")))
+  (mapcat (fn [path] (align-from-paths (str "../eng/txt/" path)
+                                       (str "../tha/txt/" path)))
+          (common-paths "../eng/txt" "../tha/txt")))
+
+(defn format-it [corpus]
+  (str/join "\n\n" 
+            (map (fn [pair] (str/join "\n"
+                                      (map (fn [s] (str/replace s #"[\r\n]" " "))
+                                           pair)))
+                 corpus)))
 
 (with-open [w (BufferedWriter. (FileWriter. "pairs.txt"))]
-  (clojure.pprint/write (remove (fn [p] (and (empty? (first p))
-                                             (empty? (second p))))
-                                (map (fn [p] (into (list) p))
-                                     (mapcat (fn [p] p) (align-all))))
-                        :stream w))
+  (.write w (format-it (remove (fn [p] (and (empty? (first p))
+                                          (empty? (second p))))
+                             (map (fn [p] (into (list) p))
+                                  (mapcat (fn [p] p) (align-all)))))))
+            
 
